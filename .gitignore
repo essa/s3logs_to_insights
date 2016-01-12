@@ -4,3 +4,4 @@ dist/
 test-es5/
 test-espowerd/
 dist.zip
+lambda-config.js

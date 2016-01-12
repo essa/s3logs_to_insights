@@ -2,7 +2,7 @@
 module.exports = {
   region: 'ap-northeast-1',
   handler: 'index.handler',
-  role: 'arn:aws:iam::726632824334:role/bg_lambda_s3logs',
+  role: 'arn:aws:iam::999999999999:role/xxxxxxxxxxxxxxxx',
   functionName: 'S3LogsToInsights',
   timeout: 10
 }
