@@ -3,7 +3,7 @@
 const Bacon = require('baconjs');
 const AWS_ICON = 'https://a0.awsstatic.com/main/images/logos/aws_logo_105x39.png';
 
-function processS3Events(event, context, modules, callback=null) {
+function processS3Events(event, modules, callback=null) {
   const s3 = modules.s3;
   const request = modules.request;
   const moment = modules.moment;
@@ -21,9 +21,7 @@ function processS3Events(event, context, modules, callback=null) {
       console.log(err, err.stack);
     else {
       let lines = data.Body.split("\n");
-      for (let line of lines) {
-        callback(params.Key, line);
-      }
+      callback(params.Key, lines);
     }
   });
 
@@ -69,5 +67,32 @@ function parseS3Log(modules, key, line) {
   return ret;
 };
 
+function sendS3logToInsights(event, modules, insightsConfig) {
+  processS3Events(event, modules, (key, lines)=>{
+    const request = modules.request;
+    const data = lines.map((line)=>parseS3Log(modules, key, line))
+      .filter((r)=>r.key);
+
+    const {accountId, insertKey} = insightsConfig;
+    const options = {
+      uri: `https://insights-collector.newrelic.com/v1/accounts/${accountId}/events`,
+      headers: {
+        "Content-Type": "application/json",
+         "X-Insert-Key": insertKey
+      },
+      body: data
+    };
+    console.log(`sending data to Insights ${options} ${data}`)
+    request.post(options, (error, response, body)=>{
+      if (!error && response.statusCode == 200) {
+        console.log(`success response=${response} body=${body}`);
+      } else {
+        console.log(`error ${error}`);
+      }
+    });
+  });
+};
+
 exports.processS3Events = processS3Events;
 exports.parseS3Log = parseS3Log;
+exports.sendS3logToInsights = sendS3logToInsights;

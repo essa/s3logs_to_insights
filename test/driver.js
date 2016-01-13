@@ -72,10 +72,6 @@ const SampleData =`
 describe('S3lotsToInsights#main', ()=>{
   const main = require('./main')
   const nullCallback = ()=>true;
-  const context = {
-    succeed: ()=>true,
-    maxMessageCount: 3
-  };
   const modules = {
     s3: {
       getObject: (params, callback)=>true
@@ -92,12 +88,12 @@ describe('S3lotsToInsights#main', ()=>{
       assert.equal('function', typeof main.processS3Events);
     });
     it('should return true', ()=>{
-      assert.equal(true, main.processS3Events(SampleEvent, context, modules, ()=>true));
+      assert.equal(true, main.processS3Events(SampleEvent, modules, ()=>true));
     });
 
     it('should call s3.getObject', ()=>{
       let spy = sinon.spy(modules.s3, 'getObject');
-      main.processS3Events(SampleEvent, context, modules, nullCallback);
+      main.processS3Events(SampleEvent, modules, nullCallback);
 
       assert(spy.called);
       let s = SampleEvent.Records[0].s3;
@@ -118,22 +114,19 @@ describe('S3lotsToInsights#main', ()=>{
       afterEach(()=> modules.s3.getObject.restore());
 
       it('should call callback', ()=>{
-        main.processS3Events(SampleEvent, context, modules, spyCallback);
+        main.processS3Events(SampleEvent, modules, spyCallback);
         assert(spyCallback.called);
       });
 
-      it('should call callback with each of lines', ()=>{
-        main.processS3Events(SampleEvent, context, modules, spyCallback);
+      it('should call callback with lines', ()=>{
+        main.processS3Events(SampleEvent, modules, spyCallback);
         assert(spyCallback.called);
 
         let s = SampleEvent.Records[0].s3;
         let lines = SampleData.split("\n");
-        assert.equal(spyCallback.callCount, lines.length);
-        let i = 0;
-        for (let line of lines) {
-          //console.log(i, line);
-          assert.deepEqual(spyCallback.getCall(i++).args, [s.object.key, line]);
-        }
+        const [k, l] = spyCallback.getCall(0).args ;
+        assert.equal(s.object.key, k);
+        assert.deepEqual(lines, l);
       });
     })
   });
@@ -172,6 +165,39 @@ describe('S3lotsToInsights#main', ()=>{
       assert.equal('http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv', ret.referrer);
       assert.equal('Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36', ret.userAgent);
       assert.equal('-', ret.versionId);
+    });
+  });
+
+  describe('#sendS3logToInsights', ()=>{
+    beforeEach(()=>{
+      sinon.stub(modules.request, 'post', (options, callback)=>{
+        callback(null, {responseCode: 200});
+      });
+      sinon.stub(modules.s3, 'getObject', (param, callback)=>{
+        callback(null, { Body: SampleData } );
+      });
+    });
+    afterEach(()=>{
+      modules.request.post.restore();
+      modules.s3.getObject.restore();
+    });
+
+    it('should define function', ()=>{
+      assert.equal('function', typeof main.sendS3logToInsights);
+    });
+
+    it('should send s3logs to Insights', ()=>{
+      const config = {
+        accountId: '12345',
+        insertKey: 'abcde'
+      };
+
+      main.sendS3logToInsights(SampleEvent, modules, config);
+      const post = modules.request.post;
+      assert(post.called);
+      const [options, callback] = post.getCall(0).args;
+      assert.equal("https://insights-collector.newrelic.com/v1/accounts/12345/events", options.uri);
+      assert.equal('abcde', options.headers['X-Insert-Key']);
     });
   });
 });
