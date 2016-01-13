@@ -31,7 +31,7 @@ function processS3Events(event, context, modules, callback=null) {
   return true;
 };
 
-const S3LogFormat = /^(\S+) (\S+) \[(.+)\] (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) .*/;
+const S3LogFormat = /^(\S+) (\S+) \[(.+)\] (\S+) (\S+) (\S+) (\S+) (\S+) "([^"]+)" (\S+) (\S+) (\d+) (\d+) (\d+) (\d+) "([^"]+)" "([^"]+)" (\S+).*/;
 
 function parseDateTime(moment, t) {
   const m = moment.utc(t, 'DD/MMM/YYYY:HH:mm:ss +0000');
@@ -43,7 +43,7 @@ function parseS3Log(modules, key, line) {
   const matched = line.match(S3LogFormat);
   console.log(matched);
   if (matched) {
-    let[ _, bucketOwner, bucket, time, remoteAddr, requester, requestId, operation] = matched;
+    let[ _, bucketOwner, bucket, time, remoteAddr, requester, requestId, operation, path, request, status, errorCode, sent, size, totalTime, turnAroundTime, referrer, userAgent, versionId] = matched;
     ret.bucketOwner = bucketOwner;
     ret.bucket = bucket;
     const t = parseDateTime(modules.moment, time);
@@ -53,6 +53,17 @@ function parseS3Log(modules, key, line) {
     ret.requester = requester;
     ret.requestId = requestId;
     ret.operation = operation;
+    ret.path = path;
+    ret.request = request;
+    ret.status = status;
+    ret.errorCode = errorCode;
+    ret.sent = parseInt(sent);
+    ret.size = parseInt(size);
+    ret.totalTime = parseInt(totalTime);
+    ret.turnAroundTime = parseInt(turnAroundTime);
+    ret.referrer = referrer;
+    ret.userAgent = userAgent;
+    ret.versionId = versionId;
     ret.key = key;
   }
   return ret;

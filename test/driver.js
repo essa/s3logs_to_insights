@@ -148,7 +148,7 @@ describe('S3lotsToInsights#main', ()=>{
       assert.deepEqual({}, main.parseS3Log(modules, key, ''));
     });
     it('should parse s3 log', ()=>{
-      const line = '1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:22:36:28 +0000] 212.252.81.92 - 91A0B205F5957B97 REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 1143005032 1143005032 1741551 109 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'
+      const line = '1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:22:36:28 +0000] 212.252.81.92 - 91A0B205F5957B97 REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 1143005032 1143005032 1741551 109 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36" -'
       const ret = main.parseS3Log(modules, key, line);
       assert.equal(key, ret.key);
       assert.equal('1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d', ret.bucketOwner);
@@ -161,7 +161,17 @@ describe('S3lotsToInsights#main', ()=>{
       assert.equal('-', ret.requester);
       assert.equal('91A0B205F5957B97', ret.requestId);
       assert.equal('REST.GET.OBJECT', ret.operation);
-
+      assert.equal('RPGMV_W_TRIAL.zip', ret.path);
+      assert.equal('GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1', ret.request);
+      assert.equal('200', ret.status);
+      assert.equal('-', ret.errorCode);
+      assert.equal(1143005032, ret.sent);
+      assert.equal(1143005032, ret.size);
+      assert.equal(1741551, ret.totalTime);
+      assert.equal(109, ret.turnAroundTime);
+      assert.equal('http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv', ret.referrer);
+      assert.equal('Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36', ret.userAgent);
+      assert.equal('-', ret.versionId);
     });
   });
 });
