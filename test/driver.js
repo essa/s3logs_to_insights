@@ -5,7 +5,6 @@ const assert = require('power-assert');
 const sinon = require('sinon');
 const sprintf = require('sprintf');
 
-const main = require('./main')
 
 describe('testPowerAssert', ()=>{
   it('should fail', ()=>{
@@ -63,8 +62,16 @@ const SampleEvent =
     ]
 };
 
+const SampleData =`
+1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:23:20:26 +0000] 202.134.26.9 - DFF22B6C434A325E REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 126965445 1143005032 195454 170 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.0; rv:43.0) Gecko/20100101 Firefox/43.0" -
+1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:23:02:32 +0000] 151.73.38.224 - 9D450EE7E819B7D2 REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 42693277 1143005032 10905067 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36" -
+1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:22:36:28 +0000] 212.252.81.92 - 91A0B205F5957B97 REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 1143005032 1143005032 1741551 109 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36" -
+`;
 
-describe('S3lotsToInsights', ()=>{
+
+describe('S3lotsToInsights#main', ()=>{
+  const main = require('./main')
+  const nullCallback = ()=>true;
   const context = {
     succeed: ()=>true,
     maxMessageCount: 3
@@ -78,27 +85,55 @@ describe('S3lotsToInsights', ()=>{
     }
   };
 
-  it('should define function', ()=>{
-    assert.equal('function', typeof main.handler);
-  });
+  describe('#processS3Events', ()=>{
 
-  it('should return true', ()=>{
-    assert.equal(true, main.handler(SampleEvent, context, modules));
-  });
+    it('should define function', ()=>{
+      assert.equal('function', typeof main.processS3Events);
+    });
+    it('should return true', ()=>{
+      assert.equal(true, main.processS3Events(SampleEvent, context, modules, ()=>true));
+    });
 
-  describe('calling getObject', ()=>{
-    let spy;
-    beforeEach(()=> spy = sinon.spy(modules.s3, 'getObject'));
-    afterEach(()=> modules.s3.getObject.restore());
+    it('should call s3.getObject', ()=>{
+      let spy = sinon.spy(modules.s3, 'getObject');
+      main.processS3Events(SampleEvent, context, modules, nullCallback);
 
-    it('should call getObject', ()=>{
-      assert.equal(true, main.handler(SampleEvent, context, modules));
-      modules.s3.getObject();
       assert(spy.called);
       let s = SampleEvent.Records[0].s3;
       let arg = spy.lastCall.args[0];
-      // assert.equal(s.object.key, arg.Key);
-      //assert.equal(s.bucket.name, arg.Bucket);
+      assert.equal(s.object.key, arg.Key);
+      assert.equal(s.bucket.name, arg.Bucket);
+      spy.restore();
     });
+
+    describe('callback', ()=>{
+      let spyCallback = null;
+      beforeEach(()=>{
+        sinon.stub(modules.s3, 'getObject', (param, callback)=>{
+          callback(null, { Body: SampleData } );
+        });
+        spyCallback = sinon.spy();
+      });
+      afterEach(()=> modules.s3.getObject.restore());
+
+      it('should call callback', ()=>{
+        main.processS3Events(SampleEvent, context, modules, spyCallback);
+        assert(spyCallback.called);
+      });
+
+      it('should call callback with each of lines', ()=>{
+        main.processS3Events(SampleEvent, context, modules, spyCallback);
+        assert(spyCallback.called);
+
+        let s = SampleEvent.Records[0].s3;
+        let lines = SampleData.split("\n");
+        assert.equal(spyCallback.callCount, lines.length);
+        let i = 0;
+        for (let line of lines) {
+          console.log(i, line);
+          assert.deepEqual(spyCallback.getCall(i++).args, [s.object.key, line]);
+        }
+      });
+    })
   });
 });
