@@ -80,6 +80,7 @@ describe('S3lotsToInsights#main', ()=>{
     s3: {
       getObject: (params, callback)=>true
     },
+    moment: moment,
     request: {
       post: (options, callback)=>callback()
     }
@@ -130,10 +131,31 @@ describe('S3lotsToInsights#main', ()=>{
         assert.equal(spyCallback.callCount, lines.length);
         let i = 0;
         for (let line of lines) {
-          console.log(i, line);
+          //console.log(i, line);
           assert.deepEqual(spyCallback.getCall(i++).args, [s.object.key, line]);
         }
       });
     })
+  });
+
+  describe('#parseS3Log', ()=>{
+    const key ='s3/logs/product-files/2016-01-12-03-46-05-XXXXXXXXXX';
+
+    it('should define function', ()=>{
+      assert.equal('function', typeof main.parseS3Log);
+    });
+    it('should return {} for null line', ()=>{
+      assert.deepEqual({}, main.parseS3Log(modules, key, ''));
+    });
+    it('should parse s3 log', ()=>{
+      const line = '1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:22:36:28 +0000] 212.252.81.92 - 91A0B205F5957B97 REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 1143005032 1143005032 1741551 109 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36'
+      const ret = main.parseS3Log(modules, key, line);
+      assert.equal(key, ret.key);
+      assert.equal('1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d', ret.bucketOwner);
+      assert.equal('degica-downloads', ret.bucket);
+      const d = moment.utc('2016-01-09 22:36:28');
+      assert.equal(d.unix(), ret.time);
+
+    });
   });
 });

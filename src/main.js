@@ -3,7 +3,7 @@
 const Bacon = require('baconjs');
 const AWS_ICON = 'https://a0.awsstatic.com/main/images/logos/aws_logo_105x39.png';
 
-const processS3Events = function (event, context, modules, callback=null) {
+function processS3Events(event, context, modules, callback=null) {
   const s3 = modules.s3;
   const request = modules.request;
   const moment = modules.moment;
@@ -22,7 +22,7 @@ const processS3Events = function (event, context, modules, callback=null) {
     else {
       let lines = data.Body.split("\n");
       for (let line of lines) {
-        callback(params.Key, line);        
+        callback(params.Key, line);
       }
     }
   });
@@ -31,4 +31,28 @@ const processS3Events = function (event, context, modules, callback=null) {
   return true;
 };
 
+const S3LogFormat = /^(\S+) (\S+) \[(.+)\] (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) (\S+) .*/;
+
+function parseDateTime(moment, t) {
+  const m = moment.utc(t, 'DD/MMM/YYYY:HH:mm:ss +0000');
+  return m;
+}
+
+function parseS3Log(modules, key, line) {
+  let ret = {};
+  const matched = line.match(S3LogFormat);
+  console.log(matched);
+  if (matched) {
+    let[ _, bucketOwner, bucket, time] = matched;
+    ret.bucketOwner = bucketOwner;
+    ret.bucket = bucket;
+    const t = parseDateTime(modules.moment, time);
+    ret.time = t.unix();
+    ret.datetime = t.format();
+    ret.key = key;
+  }
+  return ret;
+};
+
 exports.processS3Events = processS3Events;
+exports.parseS3Log = parseS3Log;
