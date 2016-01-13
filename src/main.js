@@ -43,12 +43,16 @@ function parseS3Log(modules, key, line) {
   const matched = line.match(S3LogFormat);
   console.log(matched);
   if (matched) {
-    let[ _, bucketOwner, bucket, time] = matched;
+    let[ _, bucketOwner, bucket, time, remoteAddr, requester, requestId, operation] = matched;
     ret.bucketOwner = bucketOwner;
     ret.bucket = bucket;
     const t = parseDateTime(modules.moment, time);
     ret.time = t.unix();
     ret.datetime = t.format();
+    ret.remoteAddr = remoteAddr;
+    ret.requester = requester;
+    ret.requestId = requestId;
+    ret.operation = operation;
     ret.key = key;
   }
   return ret;

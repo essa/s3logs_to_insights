@@ -153,8 +153,14 @@ describe('S3lotsToInsights#main', ()=>{
       assert.equal(key, ret.key);
       assert.equal('1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d', ret.bucketOwner);
       assert.equal('degica-downloads', ret.bucket);
+
       const d = moment.utc('2016-01-09 22:36:28');
       assert.equal(d.unix(), ret.time);
+
+      assert.equal('212.252.81.92', ret.remoteAddr);
+      assert.equal('-', ret.requester);
+      assert.equal('91A0B205F5957B97', ret.requestId);
+      assert.equal('REST.GET.OBJECT', ret.operation);
 
     });
   });
