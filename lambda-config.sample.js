@@ -1,4 +1,6 @@
 
+// rename this file to lambda-config.js and edit it
+
 module.exports = {
   region: 'ap-northeast-1',
   handler: 'index.handler',

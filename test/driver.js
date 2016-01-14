@@ -148,7 +148,7 @@ describe('S3lotsToInsights#main', ()=>{
       assert.equal('degica-downloads', ret.bucket);
 
       const d = moment.utc('2016-01-09 22:36:28');
-      assert.equal(d.unix(), ret.time);
+      assert.equal(d.unix(), ret.timestamp);
 
       assert.equal('212.252.81.92', ret.remoteAddr);
       assert.equal('-', ret.requester);
@@ -169,6 +169,9 @@ describe('S3lotsToInsights#main', ()=>{
   });
 
   describe('#sendS3logToInsights', ()=>{
+    const context = {
+      succeed: ()=>true
+    };
     beforeEach(()=>{
       sinon.stub(modules.request, 'post', (options, callback)=>{
         callback(null, {responseCode: 200});
@@ -192,7 +195,7 @@ describe('S3lotsToInsights#main', ()=>{
         insertKey: 'abcde'
       };
 
-      main.sendS3logToInsights(SampleEvent, modules, config);
+      main.sendS3logToInsights(SampleEvent, context, modules, config);
       const post = modules.request.post;
       assert(post.called);
       const [options, callback] = post.getCall(0).args;

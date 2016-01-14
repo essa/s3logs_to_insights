@@ -1,7 +1,5 @@
 'use strict';
 
-const Bacon = require('baconjs');
-const AWS_ICON = 'https://a0.awsstatic.com/main/images/logos/aws_logo_105x39.png';
 
 function processS3Events(event, modules, callback=null) {
   const s3 = modules.s3;
@@ -20,7 +18,7 @@ function processS3Events(event, modules, callback=null) {
     if (error)
       console.log(err, err.stack);
     else {
-      let lines = data.Body.split("\n");
+      let lines = data.Body.toString().split("\n");
       callback(params.Key, lines);
     }
   });
@@ -39,13 +37,13 @@ function parseDateTime(moment, t) {
 function parseS3Log(modules, key, line) {
   let ret = {};
   const matched = line.match(S3LogFormat);
-  console.log(matched);
+  // console.log(matched);
   if (matched) {
     let[ _, bucketOwner, bucket, time, remoteAddr, requester, requestId, operation, path, request, status, errorCode, sent, size, totalTime, turnAroundTime, referrer, userAgent, versionId] = matched;
     ret.bucketOwner = bucketOwner;
     ret.bucket = bucket;
     const t = parseDateTime(modules.moment, time);
-    ret.time = t.unix();
+    ret.timestamp = t.unix();
     ret.datetime = t.format();
     ret.remoteAddr = remoteAddr;
     ret.requester = requester;
@@ -67,11 +65,13 @@ function parseS3Log(modules, key, line) {
   return ret;
 };
 
-function sendS3logToInsights(event, modules, insightsConfig) {
+function sendS3logToInsights(event, context, modules, insightsConfig) {
   processS3Events(event, modules, (key, lines)=>{
     const request = modules.request;
     const data = lines.map((line)=>parseS3Log(modules, key, line))
       .filter((r)=>r.key);
+
+    data.forEach(h=>h['eventType'] = insightsConfig.eventType);
 
     const {accountId, insertKey} = insightsConfig;
     const options = {
@@ -80,12 +80,12 @@ function sendS3logToInsights(event, modules, insightsConfig) {
         "Content-Type": "application/json",
          "X-Insert-Key": insertKey
       },
-      body: data
+      body: JSON.stringify(data)
     };
-    console.log(`sending data to Insights ${options} ${data}`)
-    request.post(options, (error, response, body)=>{
+    console.log(`sending ${data.length} data to Insights`); request.post(options, (error, response, body)=>{
       if (!error && response.statusCode == 200) {
         console.log(`success response=${response} body=${body}`);
+        context.succeed('end');
       } else {
         console.log(`error ${error}`);
       }

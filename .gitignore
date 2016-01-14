@@ -5,3 +5,4 @@ test-es5/
 test-espowerd/
 dist.zip
 lambda-config.js
+src/config.js

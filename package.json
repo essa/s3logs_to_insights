@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "moment": "^2.10.3",
-    "request": "^2.58.0",
-    "baconjs": "^0.7.70"
+    "request": "^2.58.0"
   }
 }

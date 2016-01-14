@@ -1,11 +1,11 @@
 
 console.log('Loading function');
 var AWS = require('aws-sdk')
- , zlib = require('zlib')
  , moment = require('moment')
  , request = require('request');
 
 var main = require('./main');
+var insightsConfig = require('./config');
 
 exports.handler = function(event, context) {
   console.log('Received event:', JSON.stringify(event, null, 2));
@@ -14,10 +14,8 @@ exports.handler = function(event, context) {
   var s3 = new AWS.S3({ region: r.awsRegion });
   var modules = {
     s3: s3,
-    zlib: zlib,
     moment: moment,
     request: request
   };
-
-  // main.handler(event, context, modules);
+  main.sendS3logToInsights(event, context, modules, insightsConfig);
 };
