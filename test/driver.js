@@ -64,8 +64,9 @@ const SampleEvent =
 
 const SampleData =`
 1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:23:20:26 +0000] 202.134.26.9 - DFF22B6C434A325E REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 126965445 1143005032 195454 170 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.0; rv:43.0) Gecko/20100101 Firefox/43.0" -
-1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:23:02:32 +0000] 151.73.38.224 - 9D450EE7E819B7D2 REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 42693277 1143005032 10905067 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36" -
+1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:23:02:32 +0000] 151.73.38.224 - 9D450EE7E819B7D2 REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 42693277 1143005032 10905067 121 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36" -
 1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-downloads [09/Jan/2016:22:36:28 +0000] 212.252.81.92 - 91A0B205F5957B97 REST.GET.OBJECT RPGMV_W_TRIAL.zip "GET /degica-downloads/RPGMV_W_TRIAL.zip HTTP/1.1" 200 - 1143005032 1143005032 1741551 109 "http://www.rpgmakerweb.com/download/free-trials/trial-rpg-maker-mv/thankyou-mv" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36" -
+1ad5a20070ef4d665151672345b1a37578142c1f6473945ac68b0992ecced46d degica-prod.cms-assets [22/Jan/2016:05:00:29 +0000] 54.239.196.19 - 7D1852D9179E4E26 REST.GET.OBJECT steam-degica-assets/product_sales/preview_images/thumb/DOTABlindboxPins-8b.png "GET /steam-degica-assets/product_sales/preview_images/thumb/DOTABlindboxPins-8b.png HTTP/1.1" 304 - - 18965 26 - "-" "Amazon CloudFront" -
 `;
 
 
@@ -170,7 +171,8 @@ describe('S3lotsToInsights#main', ()=>{
 
   describe('#sendS3logToInsights', ()=>{
     const context = {
-      succeed: ()=>true
+      succeed: ()=>true,
+      fail: ()=>true
     };
     beforeEach(()=>{
       sinon.stub(modules.request, 'post', (options, callback)=>{

@@ -7,7 +7,6 @@ function processS3Events(event, modules, callback=null) {
   const moment = modules.moment;
 
   console.log('start main');
-  // console.log('Received event:', JSON.stringify(event, null, 2));
   var r = event.Records[0];
 
   var params = {
@@ -27,7 +26,7 @@ function processS3Events(event, modules, callback=null) {
   return true;
 };
 
-const S3LogFormat = /^(\S+) (\S+) \[(.+)\] (\S+) (\S+) (\S+) (\S+) (\S+) "([^"]+)" (\S+) (\S+) (\d+) (\d+) (\d+) (\d+) "([^"]+)" "([^"]+)" (\S+).*/;
+const S3LogFormat = /^(\S+) (\S+) \[(.+)\] (\S+) (\S+) (\S+) (\S+) (\S+) "([^"]+)" (\S+) (\S+) (\d+|\-) (\d+|\-) (\d+|\-) (\d+|\-) "([^"]+)" "([^"]+)" (\S+).*/;
 
 function parseDateTime(moment, t) {
   const m = moment.utc(t, 'DD/MMM/YYYY:HH:mm:ss +0000');
@@ -36,6 +35,9 @@ function parseDateTime(moment, t) {
 
 function parseS3Log(modules, key, line) {
   let ret = {};
+  if (line == '')
+    return ret;
+
   const matched = line.match(S3LogFormat);
   // console.log(matched);
   if (matched) {
@@ -61,6 +63,8 @@ function parseS3Log(modules, key, line) {
     ret.userAgent = userAgent;
     ret.versionId = versionId;
     ret.key = key;
+  } else {
+    console.log(`log didn't match regexp '${line}'`);
   }
   return ret;
 };
@@ -82,14 +86,20 @@ function sendS3logToInsights(event, context, modules, insightsConfig) {
       },
       body: JSON.stringify(data)
     };
-    console.log(`sending ${data.length} data to Insights`); request.post(options, (error, response, body)=>{
-      if (!error && response.statusCode == 200) {
-        console.log(`success response=${response} body=${body}`);
-        context.succeed('end');
-      } else {
-        console.log(`error ${error}`);
-      }
-    });
+    if (data.length > 0) {
+      console.log(`sending ${data.length} data to Insights`); request.post(options, (error, response, body)=>{
+        if (!error && response.statusCode == 200) {
+          //console.log(`success response=${JSON.stringify(response)} body=${body}`);
+          context.succeed('success');
+        } else {
+          console.log(`error ${error}`);
+          context.fail(`Insights api returns error ${error}`)
+        }
+      });
+    } else {
+      console.log(`No data to send to Insights`);
+      context.succeed('end');
+    }
   });
 };
 

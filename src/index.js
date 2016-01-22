@@ -8,7 +8,7 @@ var main = require('./main');
 var insightsConfig = require('./config');
 
 exports.handler = function(event, context) {
-  console.log('Received event:', JSON.stringify(event, null, 2));
+  // console.log('Received event:', JSON.stringify(event, null, 2));
 
   var r = event.Records[0];
   var s3 = new AWS.S3({ region: r.awsRegion });
